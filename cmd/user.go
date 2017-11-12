@@ -2,6 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 
 	"github.com/spf13/cobra"
 )
@@ -35,6 +39,21 @@ func init() {
 }
 
 func scrapeInstagram(profile string) list {
+	doc, err := goquery.NewDocument("https://www.instagram.com/" + profile)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	var data string
+
+	doc.Find("script").Each(func(i int, s *goquery.Selection) {
+		text := s.Text()
+		if strings.Contains(text, "window._sharedData") {
+			data = text
+		}
+	})
+
 	return []item{}
 }
 
