@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"sort"
 	"strings"
@@ -84,14 +85,19 @@ func scrapeInstagram(profile string) list {
 		comment := comments[i].Int()
 		date := dates[i].Time()
 		like := likes[i].Int()
-		link := links[i].Str
+
+		link, err := url.Parse(links[i].Str)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 
 		item := item{
 			caption:  caption,
 			comments: comment,
 			date:     date,
 			likes:    like,
-			link:     link,
+			link:     link.String(),
 		}
 
 		posts = append(posts, item)
@@ -102,7 +108,7 @@ func scrapeInstagram(profile string) list {
 
 func sortInstagramItems(items list) list {
 	sort.Slice(items[:], func(i, j int) bool {
-		return items[i].likes < items[j].likes
+		return items[i].likes > items[j].likes
 	})
 
 	return items
