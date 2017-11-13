@@ -22,7 +22,7 @@ const (
 	userItemCommentCount = userMediaItemRoot + "comments.count"
 	userItemDate         = userMediaItemRoot + "date"
 	userItemLikes        = userMediaItemRoot + "likes.count"
-	userItemLink         = userMediaItemRoot + "thumbnail_src"
+	userItemLinks        = userMediaItemRoot + "thumbnail_src"
 )
 
 type item struct {
@@ -73,18 +73,11 @@ func scrapeInstagram(profile string) list {
 		}
 	})
 
-	results := gjson.GetMany(data,
-		userItemCaption,
-		userItemCommentCount,
-		userItemDate,
-		userItemLikes,
-		userItemLink)
-
-	captions := results[0].Array()
-	comments := results[1].Array()
-	dates := results[2].Array()
-	likes := results[3].Array()
-	links := results[4].Array()
+	captions := gjson.Get(data, userItemCaption).Array()
+	comments := gjson.Get(data, userItemCommentCount).Array()
+	dates := gjson.Get(data, userItemDate).Array()
+	likes := gjson.Get(data, userItemLikes).Array()
+	links := gjson.Get(data, userItemLinks).Array()
 
 	for i := 0; i < len(captions); i++ {
 		caption := captions[i].Str
