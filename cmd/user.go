@@ -43,8 +43,10 @@ var userCmd = &cobra.Command{
 			data := scrapeInstagram(arg)
 			items := sortInstagramItems(data)
 
+			fmt.Printf("Top Posts by %s", arg)
+
 			for i, item := range items {
-				fmt.Printf("%d. %d\n", i+1, item.likes)
+				fmt.Printf("%d.\tLikes: %d\n \tLink: %s\n\n", i+1, item.likes, item.link)
 			}
 		}
 	},
@@ -72,71 +74,35 @@ func scrapeInstagram(profile string) list {
 	})
 
 	results := gjson.GetMany(data,
-		// userItemCaption,
-		// userItemCommentCount,
-		// userItemDate,
-		userItemLikes)
-	// userItemLink)
+		userItemCaption,
+		userItemCommentCount,
+		userItemDate,
+		userItemLikes,
+		userItemLink)
 
-	for i, result := range results {
-		for j, res := range result.Array() {
-			fmt.Printf("result: %s", res)
-			fmt.Println("")
-			fmt.Printf("inner %d", j)
-			fmt.Println("")
+	captions := results[0].Array()
+	comments := results[1].Array()
+	dates := results[2].Array()
+	likes := results[3].Array()
+	links := results[4].Array()
 
-			item := item{
-				likes: res.Int(),
-			}
+	for i := 0; i < len(captions); i++ {
+		caption := captions[i].Str
+		comment := comments[i].Int()
+		date := dates[i].Time()
+		like := likes[i].Int()
+		link := links[i].Str
 
-			posts = append(posts, item)
-
+		item := item{
+			caption:  caption,
+			comments: comment,
+			date:     date,
+			likes:    like,
+			link:     link,
 		}
-		// post := result.Array()
 
-		fmt.Println(i)
-		fmt.Println(result)
-
-		// caption := post[0].Str
-		// comments := post[1].Int()
-		// date := post[2].Time()
-		// likes := post[3].Int()
-		// link := post[4].Str
-
-		// item := item{
-		// 	caption:  caption,
-		// 	comments: comments,
-		// 	date:     date,
-		// 	likes:    likes,
-		// 	link:     link,
-		// }
-
-		// posts = append(posts, item)
+		posts = append(posts, item)
 	}
-	// for i, result := range collection {
-	// 	fmt.Println(i)
-	// 	for _, res := range result.Array() {
-	// 		// if
-	// 		post := res.Array()
-
-	// 		fmt.Println(post[0].Str)
-	// 		// caption := post[0].Str
-	// 		// comments := post[1].Int()
-	// 		// date := post[2].Time()
-	// 		// likes := post[3].Int()
-	// 		// link := post[4].Str
-
-	// 		// item := item{
-	// 		// 	caption:  caption,
-	// 		// 	comments: comments,
-	// 		// 	date:     date,
-	// 		// 	likes:    likes,
-	// 		// 	link:     link,
-	// 		// }
-
-	// 		// posts = append(posts, item)
-	// 	}
-	// }
 
 	return posts
 }
