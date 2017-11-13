@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -20,7 +21,7 @@ const (
 	userItemCaption      = userMediaItemRoot + "caption"
 	userItemCommentCount = userMediaItemRoot + "comments.count"
 	userItemDate         = userMediaItemRoot + "date"
-	userItemLikes        = userMediaItemRoot + "likes"
+	userItemLikes        = userMediaItemRoot + "likes.count"
 	userItemLink         = userMediaItemRoot + "thumbnail_src"
 )
 
@@ -43,7 +44,7 @@ var userCmd = &cobra.Command{
 			items := sortInstagramItems(data)
 
 			for i, item := range items {
-				fmt.Printf("%d. %s - %s", i, item.link, item.link)
+				fmt.Printf("%d. %d\n", i+1, item.likes)
 			}
 		}
 	},
@@ -70,38 +71,80 @@ func scrapeInstagram(profile string) list {
 		}
 	})
 
-	collection := gjson.GetMany(data,
-		userItemCaption,
-		userItemCommentCount,
-		userItemDate,
-		userItemLikes,
-		userItemLink)
+	results := gjson.GetMany(data,
+		// userItemCaption,
+		// userItemCommentCount,
+		// userItemDate,
+		userItemLikes)
+	// userItemLink)
 
-	for _, result := range collection {
-		for _, res := range result.Array() {
-			post := res.Array()
-
-			caption := post[0].Str
-			comments := post[1].Int()
-			date := post[2].Time()
-			likes := post[3].Int()
-			link := post[4].Str
+	for i, result := range results {
+		for j, res := range result.Array() {
+			fmt.Printf("result: %s", res)
+			fmt.Println("")
+			fmt.Printf("inner %d", j)
+			fmt.Println("")
 
 			item := item{
-				caption:  caption,
-				comments: comments,
-				date:     date,
-				likes:    likes,
-				link:     link,
+				likes: res.Int(),
 			}
 
 			posts = append(posts, item)
+
 		}
+		// post := result.Array()
+
+		fmt.Println(i)
+		fmt.Println(result)
+
+		// caption := post[0].Str
+		// comments := post[1].Int()
+		// date := post[2].Time()
+		// likes := post[3].Int()
+		// link := post[4].Str
+
+		// item := item{
+		// 	caption:  caption,
+		// 	comments: comments,
+		// 	date:     date,
+		// 	likes:    likes,
+		// 	link:     link,
+		// }
+
+		// posts = append(posts, item)
 	}
+	// for i, result := range collection {
+	// 	fmt.Println(i)
+	// 	for _, res := range result.Array() {
+	// 		// if
+	// 		post := res.Array()
+
+	// 		fmt.Println(post[0].Str)
+	// 		// caption := post[0].Str
+	// 		// comments := post[1].Int()
+	// 		// date := post[2].Time()
+	// 		// likes := post[3].Int()
+	// 		// link := post[4].Str
+
+	// 		// item := item{
+	// 		// 	caption:  caption,
+	// 		// 	comments: comments,
+	// 		// 	date:     date,
+	// 		// 	likes:    likes,
+	// 		// 	link:     link,
+	// 		// }
+
+	// 		// posts = append(posts, item)
+	// 	}
+	// }
 
 	return posts
 }
 
 func sortInstagramItems(items list) list {
-	return []item{}
+	sort.Slice(items[:], func(i, j int) bool {
+		return items[i].likes < items[j].likes
+	})
+
+	return items
 }
