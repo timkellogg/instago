@@ -4,16 +4,32 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/tidwall/gjson"
 
 	"github.com/spf13/cobra"
 )
 
+const (
+	identifier           = "window._sharedData"
+	userDataRoot         = "entry_data.ProfilePage.0.user"
+	userMediaRoot        = userDataRoot + ".media.nodes"
+	userMediaItemRoot    = userMediaRoot + ".#."
+	userItemCaption      = userMediaItemRoot + "caption"
+	userItemCommentCount = userMediaItemRoot + "comments.count"
+	userItemDate         = userMediaItemRoot + "date"
+	userItemLikes        = userMediaItemRoot + "likes"
+	userItemLink         = userMediaItemRoot + "thumbnail_src"
+)
+
 type item struct {
-	link  string
-	likes int
-	date  string
+	caption  string
+	comments int64
+	date     time.Time
+	likes    int64
+	link     string
 }
 
 type list []item
@@ -23,7 +39,6 @@ var userCmd = &cobra.Command{
 	Short: "User's feed which to scrape",
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, arg := range args {
-			// get data
 			data := scrapeInstagram(arg)
 			items := sortInstagramItems(data)
 
@@ -46,15 +61,45 @@ func scrapeInstagram(profile string) list {
 	}
 
 	var data string
+	var posts []item
 
 	doc.Find("script").Each(func(i int, s *goquery.Selection) {
 		text := s.Text()
-		if strings.Contains(text, "window._sharedData") {
-			data = text
+		if strings.Contains(text, identifier) {
+			data = strings.Replace(text, identifier, "", 1)
 		}
 	})
 
-	return []item{}
+	collection := gjson.GetMany(data,
+		userItemCaption,
+		userItemCommentCount,
+		userItemDate,
+		userItemLikes,
+		userItemLink)
+
+	for _, result := range collection {
+		for _, res := range result.Array() {
+			post := res.Array()
+
+			caption := post[0].Str
+			comments := post[1].Int()
+			date := post[2].Time()
+			likes := post[3].Int()
+			link := post[4].Str
+
+			item := item{
+				caption:  caption,
+				comments: comments,
+				date:     date,
+				likes:    likes,
+				link:     link,
+			}
+
+			posts = append(posts, item)
+		}
+	}
+
+	return posts
 }
 
 func sortInstagramItems(items list) list {
